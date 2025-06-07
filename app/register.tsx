@@ -77,7 +77,7 @@ const Register = () => {
                             router.push("/signin");
                         }}
                     >
-                        <Text style={styles.buttonText}>Login</Text>
+                        <Text style={styles.linkText}>Login</Text>
                     </Pressable>
                 </Text>
             </View>
@@ -104,6 +104,10 @@ const styles = StyleSheet.create({
     buttonText: {
         color: "white",
         fontSize: 18,
+    },
+    linkText: {
+        color: "blue",
+        textDecorationLine: "underline",
     },
 });
 

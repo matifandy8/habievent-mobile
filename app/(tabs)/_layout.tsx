@@ -7,7 +7,6 @@ export default function AppLayout(){
       <Tabs>
         <Tabs.Screen name="index" options={{ title: 'Home' }} />
         <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
-        {/* Agrega más pestañas según tus necesidades */}
       </Tabs>
     );
 }

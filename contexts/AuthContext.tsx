@@ -1,5 +1,5 @@
 import { createContext, PropsWithChildren, useContext, useState } from "react";
-import { Text, View } from "react-native";
+import { ActivityIndicator, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type User = {
@@ -48,7 +48,7 @@ const AuthProvider: React.FC<PropsWithChildren<{}>> = ({ children }) => {
         // Simulate an API call for signing in
         setTimeout(() => {
             setSession(true);
-            setUser({ username: "johndoe", name: "John Doe", email: "" });
+            setUser({ username: "johndoe", name: "John Doe", email: "johnde@gmail.com" });
             setLoading(false); 
         }
         , 1000);
@@ -70,7 +70,7 @@ const AuthProvider: React.FC<PropsWithChildren<{}>> = ({ children }) => {
         <AuthContext.Provider value={contextData}>
             {loading ? (
                 <View style={{ flex: 1, justifyContent: "center", alignItems: "center", paddingTop: insets.top, paddingBottom: insets.bottom }}>
-                    <Text>Loading..</Text>
+                    <ActivityIndicator size="large" color="#000000"/>
                 </View>
             ) : (
                 children
