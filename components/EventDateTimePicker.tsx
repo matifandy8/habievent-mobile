@@ -31,6 +31,7 @@ export default function EventDateTimePicker({
             timePicker
           />
           <Button title="Close" onPress={onClose} />
+          <Button title="Save" onPress={() => onChange(date)} />
         </View>
       </View>
     </Modal>

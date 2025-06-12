@@ -2,6 +2,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Redirect, router } from "expo-router";
 import { useState } from "react";
 import {
+    KeyboardAvoidingView,
+    Platform,
     Pressable,
     StyleSheet,
     Text,
@@ -13,69 +15,67 @@ const Signin = () => {
     const { session, signin } = useAuth();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [loading, setLoading] = useState(false);
 
     const handleSubmit = async () => {
-        // Here you would typically call your signin function from the AuthContext
-        // For example: await signin(email, password);
-        console.log("Email:", email);
-        console.log("Password:", password);
-        signin(email, password);
-        // Reset fields after submission
-        setEmail("");
-        setPassword("");
-
+        signin(email, password)
     };
 
     if (session) return <Redirect href="/" />;
     return (
-        <View style={styles.container}>
+        <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.container}>
             <View>
-                <Text style={{ fontSize: 24, fontWeight: "bold", marginBottom: 20 }}>
-                    SignIn
-                </Text>
-                <Text>
-                    Please enter your credentials to login.
-                </Text>
-                <TextInput
-                    placeholder="Enter your email..."
-                    style={styles.input}
-                    value={email}
-                    onChangeText={(text) => setEmail(text)}
-                />
+                <View>
+                    <Text style={{ fontSize: 24, fontWeight: "bold", marginBottom: 20 }}>
+                        SignIn
+                    </Text>
+                    <Text>
+                        Please enter your credentials to login.
+                    </Text>
+                    <TextInput
+                        placeholder="Enter your email..."
+                        style={styles.input}
+                        value={email}
+                        onChangeText={(text) => setEmail(text)}
+                        autoCapitalize="none"
+                    />
 
-                <Text>
-                    Password
-                </Text>
-                <TextInput
-                    style={styles.input}
-                    placeholder="Password"
-                    value={password}
-                    onChangeText={(text) => setPassword(text)}
-                    secureTextEntry
-                />
+                    <Text>
+                        Password
+                    </Text>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Password"
+                        value={password}
+                        onChangeText={(text) => setPassword(text)}
+                        secureTextEntry
+                    />
 
-                <Pressable style={styles.button} onPress={handleSubmit}>
-                    <Text style={styles.buttonText}>Login</Text>
-                </Pressable>
+                    <Pressable style={styles.button} onPress={handleSubmit} disabled={loading}>
+                        <Text style={styles.buttonText}>{loading ? "Loading..." : "Login"}</Text>
+                    </Pressable>
 
-                <Text
-                    style={{
-                        marginTop: 20,
-                        textAlign: "center",
-                        color: "grey",
-                    }}
-                >
-                    Don&lsquo;t have an account?{" "}
-                    <Pressable
-                        onPress={() => {
-                            router.push("/register");
+                    <Text
+                        style={{
+                            marginTop: 20,
+                            textAlign: "center",
+                            color: "grey",
                         }}
                     >
-                        <Text style={styles.linkText}>Register</Text>
-                    </Pressable>
-                </Text>
+                        Don’t have an account?{" "}
+                        <Pressable
+                            onPress={() => {
+                                router.push("/register");
+                            }}
+                        >
+                            <Text style={styles.linkText}>Register</Text>
+                        </Pressable>
+                    </Text>
+                </View>
             </View>
-        </View>
+        </KeyboardAvoidingView>
     );
 };
 
@@ -89,7 +89,6 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderRadius: 10,
         padding: 10,
-
         marginTop: 10,
         marginBottom: 10,
         borderColor: "grey",

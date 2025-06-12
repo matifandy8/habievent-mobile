@@ -1,7 +1,7 @@
-import React, { useState } from "react";
-import EventCard from "@/components/EventCard";
-import { FlatList, SafeAreaView, StyleSheet, Text, View, Pressable, ScrollView } from "react-native";
 import AddEventModal from "@/components/AddEventModal";
+import EventCard from "@/components/EventCard";
+import React, { useState } from "react";
+import { FlatList, Pressable, RefreshControl, SafeAreaView, StyleSheet, Text, View } from "react-native";
 type Event = {
   id: string;
   event_name: string;
@@ -15,6 +15,14 @@ type Event = {
 };
 export default function Index() {
   const [modalVisible, setModalVisible] = useState(false);
+  const [refreshing, setRefreshing] = React.useState(false);
+
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 2000);
+  }, []);
 
   const mockEvents: Event[] = [
     {
@@ -96,25 +104,23 @@ export default function Index() {
         onSave={handleSaveEvent}
       />
 
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }}>
-        <FlatList
-          data={mockEvents}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <EventCard
-            event={item}
-            onEdit={() => console.log('Edit', item.id)}
-            onDelete={(id) => console.log('Delete', id)}
-            onNotify={(id) => console.log('Notify', id)}
-            isNotified={false}
-          />}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={
-            <View style={{ padding: 20, alignItems: 'center' }}>
-              <Text>No events available</Text>
-            </View>
-          }
-        />
-      </ScrollView>
+      <FlatList
+        data={mockEvents}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => <EventCard event={item}  />}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+          />
+        }
+        contentContainerStyle={{ paddingBottom: 20 }}
+        ListEmptyComponent={
+          <View style={{ padding: 20, alignItems: 'center' }}>
+            <Text>No events available</Text>
+          </View>
+        }
+      />
     </SafeAreaView>
   );
 }
