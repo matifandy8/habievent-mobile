@@ -2,6 +2,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Redirect, router } from "expo-router";
 import { useState } from "react";
 import {
+    Alert,
     KeyboardAvoidingView,
     Platform,
     Pressable,
@@ -18,7 +19,26 @@ const Signin = () => {
     const [loading, setLoading] = useState(false);
 
     const handleSubmit = async () => {
-        signin(email, password)
+        if (!email || !password) {
+            Alert.alert("Missing fields", "Please fill out all fields.");
+            return;
+        }
+    
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            Alert.alert("Invalid email", "Please enter a valid email address.");
+            return;
+        }
+    
+        setLoading(true);
+        try {
+            await signin(email, password);
+            router.push('/');
+        } catch (err) {
+            Alert.alert('Error', 'Invalid credentials or server error.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     if (session) return <Redirect href="/" />;
@@ -35,27 +55,34 @@ const Signin = () => {
                         Please enter your credentials to login.
                     </Text>
                     <TextInput
-                        placeholder="Enter your email..."
-                        style={styles.input}
-                        value={email}
-                        onChangeText={(text) => setEmail(text)}
-                        autoCapitalize="none"
+                         placeholder="Enter your email..."
+                         style={styles.input}
+                         value={email}
+                         onChangeText={setEmail}
+                         autoCapitalize="none"
+                         keyboardType="email-address"
+                         textContentType="emailAddress"
                     />
 
                     <Text>
                         Password
                     </Text>
                     <TextInput
-                        style={styles.input}
                         placeholder="Password"
+                        style={styles.input}
                         value={password}
-                        onChangeText={(text) => setPassword(text)}
+                        onChangeText={setPassword}
                         secureTextEntry
+                        textContentType="password"
                     />
 
-                    <Pressable style={styles.button} onPress={handleSubmit} disabled={loading}>
+                    <Pressable
+                        style={[styles.button, (!email || !password) && { opacity: 0.5 }]}
+                        onPress={handleSubmit}
+                        disabled={loading || !email || !password}
+                    >
                         <Text style={styles.buttonText}>{loading ? "Loading..." : "Login"}</Text>
-                    </Pressable>
+                    </Pressable>    
 
                     <Text
                         style={{

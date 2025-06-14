@@ -14,14 +14,34 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const Register = () => {
-    const { session, register } = useAuth();
+    const {session, register } = useAuth();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [username, setUsername] = useState("");
+    const [loading, setLoading] = useState(false);
     const insets = useSafeAreaInsets();
 
    const handleSubmit = async () => {
-      register(username, email, password)
+
+        if (!username || !email || !password) {
+            Alert.alert("Missing fields", "Please fill out all fields.");
+            return;
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            Alert.alert("Invalid email", "Please enter a valid email address.");
+            return;
+        }
+
+        setLoading(true);
+        try {
+        await register(username, email, password);
+        } catch (err) {
+            Alert.alert('Error', 'Registro fallido. Verificá los datos');
+        } finally {
+            setLoading(false);
+        }
     };
 
     if (session) return <Redirect href="/" />;
@@ -62,8 +82,12 @@ const Register = () => {
                         onChangeText={(text) => setPassword(text)}
                         secureTextEntry
                     />
-                    <Pressable style={styles.button} onPress={handleSubmit}>
-                        <Text style={styles.buttonText}>Register</Text>
+                    <Pressable
+                        style={[styles.button, (!username || !email || !password) && { opacity: 0.5 }]}
+                        onPress={handleSubmit}
+                        disabled={loading || !username || !email || !password}
+                    >
+                        <Text style={styles.buttonText}>{loading ? "Loading..." : "Register"}</Text>
                     </Pressable>
                     <Text
                         style={{

@@ -1,120 +1,86 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import {
-    createContext,
-    PropsWithChildren,
-    useContext,
-    useEffect,
-    useState,
-} from "react";
-import { ActivityIndicator, Alert, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { Alert } from 'react-native';
+import { AuthService } from '../services/AuthService';
 
 type User = {
   username: string;
-  name: string;
   email: string;
 };
 
 type AuthContextType = {
   session: boolean;
-  user: User | false;
+  user: User | null;
+  loading: boolean;
   signin: (email: string, password: string) => Promise<void>;
-  signout: () => Promise<void>;
   register: (username: string, email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType>({
   session: false,
-  user: false,
+  user: null,
+  loading: true,
   signin: async () => {},
-  signout: async () => {},
   register: async () => {},
+  logout: async () => {},
 });
 
-const AuthProvider: React.FC<PropsWithChildren<{}>> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(false);
-  const [user, setUser] = useState<User | false>(false);
-  const insets = useSafeAreaInsets();
-
-  const API_URL = "http://localhost:3001"; 
 
   useEffect(() => {
-    const checkToken = async () => {
-      const token = await AsyncStorage.getItem("token");
-      if (token) {
+    const validate = async () => {
+      try {
+        const data = await AuthService.validateToken();
+        setUser(data.user);
         setSession(true);
-        setUser({ username: "authed", name: "Auto Login", email: "saved@example.com" });
+      } catch {
+        setUser(null);
+        setSession(false);
+        await AsyncStorage.removeItem('token');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
-    checkToken();
+    validate();
   }, []);
-
-  const register = async (username: string, email: string, password: string) => {
-    register(username, email, password)
-  };
 
   const signin = async (email: string, password: string) => {
     try {
-      setLoading(true);
-      const response = await fetch(`${API_URL}/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Login failed");
-      }
-
-      const data = await response.json();
-      const token = data.token;
-
-      await AsyncStorage.setItem("token", token);
-
+      const data = await AuthService.login(email, password);
+      setUser(data.user);
       setSession(true);
-      setUser({ username: email.split("@")[0], name: "Logged User", email });
     } catch (err: any) {
-      Alert.alert("Error", err.message || "Something went wrong during login");
-    } finally {
-      setLoading(false);
+      Alert.alert('Login failed', err.message);
+      throw err;
     }
   };
 
-  const signout = async () => {
-    setLoading(true);
-    await AsyncStorage.removeItem("token");
-    setUser(false);
-    setSession(false);
-    setLoading(false);
+  const register = async (username: string, email: string, password: string) => {
+    try {
+      const data = await AuthService.register(username, email, password);
+      setUser(data.user);
+      setSession(true);
+    } catch (err: any) {
+      Alert.alert('Register failed', err.message);
+      throw err;
+    }
   };
 
-  const contextData = { session, user, signin, signout, register };
+  const logout = async () => {
+    await AuthService.logout();
+    setUser(null);
+    setSession(false);
+  };
 
   return (
-    <AuthContext.Provider value={contextData}>
-      {loading ? (
-        <View
-          style={{
-            flex: 1,
-            justifyContent: "center",
-            alignItems: "center",
-            paddingTop: insets.top,
-            paddingBottom: insets.bottom,
-          }}
-        >
-          <ActivityIndicator size="large" color="#000000" />
-        </View>
-      ) : (
-        children
-      )}
+    <AuthContext.Provider value={{ user, loading, signin, register, logout, session }}>
+      {children}
     </AuthContext.Provider>
   );
 };
 
-const useAuth = () => useContext(AuthContext);
-
-export { AuthContext, AuthProvider, useAuth };
-
+export const useAuth = () => useContext(AuthContext);

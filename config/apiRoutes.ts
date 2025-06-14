@@ -1,9 +1,5 @@
 
-const API_BASE_URL =
-    process.env.VITE_API_BASE_URL ||
-    (__DEV__
-        ? 'http://localhost:3000/api'
-        : 'https://habievent.onrender.com/api');
+const API_BASE_URL = 'http://localhost:3000/api';
 
 export const AUTH_API_ROUTES = {
     validateToken: `${API_BASE_URL}/auth/validate-token`,

@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import EventDateTimePicker from "./EventDateTimePicker";
 import EventTextFields from "./EventTextFields";
+
 
 interface AddEventModalProps {
   visible: boolean;
@@ -9,18 +10,29 @@ interface AddEventModalProps {
   onSave: (event: {
     event_name: string;
     event_type: string;
-    event_location: string;
-    event_category: string;
-    event_link: string;
-    event_notes: string;
-    date: string;
+    location: string;
+    category: string;
+    link: string;
+    notes: string;
+    event_time: string;
+    
   }) => void;
+  initialData?: {
+    event_name: string;
+    event_type?: string;
+    event_time: string;
+    location?: string;
+    category?: string;
+    link?: string;
+    notes?: string;
+  } | null;
 }
 
 export default function AddEventModal({
   visible,
   onClose,
   onSave,
+  initialData
 }: AddEventModalProps) {
   const [eventName, setEventName] = useState("");
   const [eventType, setEventType] = useState("");
@@ -31,6 +43,18 @@ export default function AddEventModal({
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
 
+  useEffect(() => {
+    if (initialData) {
+      setEventName(initialData.event_name);
+      setEventType(initialData.event_type ?? '');
+      setEventLocation(initialData.location ?? '');
+      setEventCategory(initialData.category ?? '');
+      setEventLink(initialData.link ?? '');
+      setEventNotes(initialData.notes ?? '');
+      setSelectedDate(new Date(initialData.event_time));
+    }
+  }, [initialData]);
+
   const handleSave = () => {
     if (!eventName.trim()) {
       alert("Please enter an event name.");
@@ -39,11 +63,11 @@ export default function AddEventModal({
     onSave({
       event_name: eventName,
       event_type: eventType,
-      event_location: eventLocation,
-      event_category: eventCategory,
-      event_link: eventLink,
-      event_notes: eventNotes,
-      date: selectedDate.toISOString(),
+      location: eventLocation,
+      category: eventCategory,
+      link: eventLink,
+      notes: eventNotes,
+      event_time: selectedDate.toISOString(),
     });
     setEventName("");
     setEventType("");
@@ -64,7 +88,7 @@ export default function AddEventModal({
     >
       <View style={styles.overlay}>
         <View style={styles.content}>
-          <Text style={styles.title}>Add Event</Text>
+          <Text style={styles.title}>{initialData ? 'Edit Event' : 'Add Event'}</Text>
           <EventTextFields
             eventName={eventName}
             setEventName={setEventName}
@@ -107,7 +131,7 @@ export default function AddEventModal({
               <Text style={styles.buttonText}>Cancel</Text>
             </Pressable>
             <Pressable style={styles.button} onPress={handleSave}>
-              <Text style={styles.buttonText}>Create</Text>
+              <Text style={styles.buttonText}>{initialData ? 'Save' : 'Create'}</Text>
             </Pressable>
           </View>
         </View>

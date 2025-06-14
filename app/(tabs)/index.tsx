@@ -1,7 +1,8 @@
 import AddEventModal from "@/components/AddEventModal";
 import EventCard from "@/components/EventCard";
-import React, { useState } from "react";
-import { FlatList, Pressable, RefreshControl, SafeAreaView, StyleSheet, Text, View } from "react-native";
+import { EventsService } from "@/services/EventsService";
+import React, { useEffect, useState } from "react";
+import { FlatList, Pressable, SafeAreaView, StyleSheet, Text, View } from "react-native";
 type Event = {
   id: string;
   event_name: string;
@@ -15,74 +16,59 @@ type Event = {
 };
 export default function Index() {
   const [modalVisible, setModalVisible] = useState(false);
-  const [refreshing, setRefreshing] = React.useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
-  const onRefresh = React.useCallback(() => {
-    setRefreshing(true);
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 2000);
+  const fetchEvents = async () => {
+    try {
+      const events = await EventsService.getEvents();
+      setEvents(events);
+    } catch (error) {
+      console.error('Error fetching events:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchEvents();
   }, []);
 
-  const mockEvents: Event[] = [
-    {
-      id: "1",
-      event_name: "React Native Meetup",
-      event_type: "Meetup",
-      event_time: "2025-06-10 18:00",
-      location: "Tech Hub, City Center",
-      category: "Technology",
-      link: "https://reactnativemeetup.com",
-      notes: "Bring your laptop and questions!",
-      user_id: "u1",
-    },
-    {
-      id: "2",
-      event_name: "Startup Pitch Night",
-      event_type: "Competition",
-      event_time: "2025-06-15 20:00",
-      location: "Innovation Lab",
-      category: "Business",
-      link: "https://startupnight.com",
-      notes: "Pitch your startup idea to investors.",
-      user_id: "u2",
-    },
-    {
-      id: "3",
-      event_name: "Art & Wine Evening",
-      event_type: "Social",
-      event_time: "2025-06-20 19:30",
-      location: "Gallery 21",
-      category: "Art",
-      notes: "Enjoy local art and wine tasting.",
-      user_id: "u3",
-    },
-    {
-      id: "4",
-      event_name: "Yoga in the Park",
-      event_type: "Wellness",
-      event_time: "2025-06-22 08:00",
-      location: "Central Park",
-      category: "Health",
-      link: "https://yogapark.com",
-      user_id: "u4",
-    },
-    {
-      id: "5",
-      event_name: "Live Jazz Night",
-      event_type: "Concert",
-      event_time: "2025-06-25 21:00",
-      location: "Blue Note Club",
-      category: "Music",
-      notes: "Featuring local jazz bands.",
-      user_id: "u5",
-    },
-  ];
-
-  // Aquí puedes manejar el guardado real del evento
-  const handleSaveEvent = (event: { event_name: string }) => {
+  const handleSaveEvent = async (event: { event_name: string }) => {
     console.log("Evento guardado:", event);
-    // Aquí puedes agregar el evento a tu lista real
+    try {
+      const response = await EventsService.createEvent(event);
+      console.log("Evento guardado:", response);
+      setEvents((prevEvents) => [...prevEvents, response]);
+    } catch (error) {
+      console.error("Error al guardar el evento:", error);
+    }
+  };
+
+  const deleteEvent = async (id: string) => {
+    try {
+      await EventsService.deleteEvent(id);
+      setEvents((prevEvents) => prevEvents.filter((event) => event.id !== id));
+    } catch (error) {
+      console.error("Error al eliminar el evento:", error);
+    }
+  };
+
+  const editEvent = (event: Event) => {
+    setSelectedEvent(event);
+  };
+
+  const handleEditEvent = async (eventData: Partial<Event>) => {
+    if (!selectedEvent) return;
+    try {
+      console.log(eventData)
+      const updatedEvent = await EventsService.updateEvent(selectedEvent.id, eventData);
+      setEvents(prevEvents => prevEvents.map(event => 
+        event.id === selectedEvent.id ? updatedEvent : event
+      ));
+      setIsEditModalOpen(false);
+    } catch (error) {
+      console.error("Error updating event:", error);
+    }
   };
 
   return (
@@ -104,16 +90,17 @@ export default function Index() {
         onSave={handleSaveEvent}
       />
 
+      <AddEventModal
+        visible={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onSave={handleEditEvent}
+        initialData={selectedEvent}
+      />
+
       <FlatList
-        data={mockEvents}
+        data={events}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <EventCard event={item}  />}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-          />
-        }
+        renderItem={({ item }) => <EventCard event={item} onEdit={() => { editEvent(item); setIsEditModalOpen(true); }} onDelete={() => deleteEvent(item.id)} onNotify={() => {}} isNotified={false} />}
         contentContainerStyle={{ paddingBottom: 20 }}
         ListEmptyComponent={
           <View style={{ padding: 20, alignItems: 'center' }}>
