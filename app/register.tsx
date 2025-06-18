@@ -49,7 +49,7 @@ const Register = () => {
         <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={styles.container}>
-            <View style={{ flex: 1, padding: 20, paddingTop: insets.top, paddingBlock: insets.bottom }}>
+            <View>
                 <View>
                     <Text style={{ fontSize: 24, fontWeight: "bold", marginBottom: 20 }}>
                         Register

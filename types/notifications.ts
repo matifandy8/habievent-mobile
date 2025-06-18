@@ -1,4 +1,4 @@
-export type NotificationPreferences = {
+export interface Notification {
   id?: string;
   user_id?: string;
   event_id: string;
@@ -13,7 +13,7 @@ export type NotificationPreferences = {
   at_event_time: boolean;
   created_at?: string;
   updated_at?: string;
-};
+}
 
-export type NotificationPreferencesArray = NotificationPreferences[];
+export type NotificationPreferences = Notification;
 

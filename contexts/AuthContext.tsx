@@ -3,14 +3,9 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Alert } from 'react-native';
 import { AuthService } from '../services/AuthService';
 
-type User = {
-  username: string;
-  email: string;
-};
-
 type AuthContextType = {
   session: boolean;
-  user: User | null;
+  userId: string | null;
   loading: boolean;
   signin: (email: string, password: string) => Promise<void>;
   register: (username: string, email: string, password: string) => Promise<void>;
@@ -19,7 +14,7 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType>({
   session: false,
-  user: null,
+  userId: null,
   loading: true,
   signin: async () => {},
   register: async () => {},
@@ -27,7 +22,7 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(false);
 
@@ -35,10 +30,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const validate = async () => {
       try {
         const data = await AuthService.validateToken();
-        setUser(data.user);
+        setUserId(data.userId);
         setSession(true);
       } catch {
-        setUser(null);
+        setUserId(null);
         setSession(false);
         await AsyncStorage.removeItem('token');
       } finally {
@@ -51,7 +46,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signin = async (email: string, password: string) => {
     try {
       const data = await AuthService.login(email, password);
-      setUser(data.user);
+      setUserId(data.user);
       setSession(true);
     } catch (err: any) {
       Alert.alert('Login failed', err.message);
@@ -62,7 +57,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = async (username: string, email: string, password: string) => {
     try {
       const data = await AuthService.register(username, email, password);
-      setUser(data.user);
+      setUserId(data.user);
       setSession(true);
     } catch (err: any) {
       Alert.alert('Register failed', err.message);
@@ -72,12 +67,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     await AuthService.logout();
-    setUser(null);
+    setUserId(null);
     setSession(false);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signin, register, logout, session }}>
+    <AuthContext.Provider value={{ userId, loading, signin, register, logout, session }}>
       {children}
     </AuthContext.Provider>
   );

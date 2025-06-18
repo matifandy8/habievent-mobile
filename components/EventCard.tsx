@@ -1,19 +1,11 @@
+import { Event } from "@/types/events";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
 import { Divider, IconButton, Menu } from "react-native-paper";
 
-type Event = {
-    id: string;
-    event_name: string;
-    event_type?: string;
-    event_time: string;
-    location?: string;
-    category?: string;
-    link?: string;
-    notes?: string;
-    user_id?: string;
-};
+
+
 interface EventCardProps {
   event: Event;
   onEdit: (event: Event) => void;
@@ -48,7 +40,7 @@ const EventCard = ({ event, onEdit, onDelete, onNotify, isNotified }: EventCardP
         <Text style={styles.infoText}>{event.location}</Text>
       </View>
       {event.link ? (
-        <Pressable style={styles.infoRow} onPress={() => Linking.openURL(event.link)}>
+        <Pressable style={styles.infoRow} onPress={() => Linking.openURL(event.link!)}>
           <Feather name="link" size={18} color="#6b7280" />
           <Text style={[styles.infoText, { color: "#2563eb", textDecorationLine: "underline" }]}>
             Event Website

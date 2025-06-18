@@ -29,7 +29,6 @@ export const AuthService = {
             method: 'POST',
             body: JSON.stringify({ email, password })
         });
-
         await AsyncStorage.setItem('token', data.accessToken);
         return data;
     },
@@ -45,9 +44,10 @@ export const AuthService = {
     },
 
     validateToken: async () => {
-        return fetchWithAuth(AUTH_API_ROUTES.validateToken, {
+        const data = await fetchWithAuth(AUTH_API_ROUTES.validateToken, {
             method: 'POST'
         });
+        return data;
     },
 
     refreshToken: async () => {

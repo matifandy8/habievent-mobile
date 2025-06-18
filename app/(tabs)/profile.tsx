@@ -3,26 +3,18 @@ import { router } from 'expo-router';
 import React from 'react';
 import { Button, StyleSheet, Text, View } from 'react-native';
 
-const ProfileScreen = ({ navigation }: any) => {
-     const { signout, user  } = useAuth();
+const ProfileScreen = () => {
+    // here with userid you can make a call to backend to get info about you profile
+     const { logout } = useAuth();
 
     const handleLogout = async () => {
-        await signout();
+        await logout();
         router.replace('/signin');
     }
    
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Profile</Text>
-            {user ? (
-                <View style={styles.info}>
-                    <Text>Username: {user.username}</Text>
-                    <Text>Name: {user.name}</Text>
-                    <Text>Email: {user.email}</Text>
-                </View>
-            ) : (
-                <Text>No user data available</Text>
-            )}
             <Button title="Logout" onPress={handleLogout} />
         </View>
     );

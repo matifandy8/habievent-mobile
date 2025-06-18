@@ -1,73 +1,89 @@
 import AddEventModal from "@/components/AddEventModal";
 import EventCard from "@/components/EventCard";
-import { EventsService } from "@/services/EventsService";
-import React, { useEffect, useState } from "react";
-import { FlatList, Pressable, SafeAreaView, StyleSheet, Text, View } from "react-native";
-type Event = {
-  id: string;
-  event_name: string;
-  event_type?: string;
-  event_time: string;
-  location?: string;
-  category?: string;
-  link?: string;
-  notes?: string;
-  user_id?: string;
-};
-export default function Index() {
-  const [modalVisible, setModalVisible] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [events, setEvents] = useState<Event[]>([]);
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+import NotifyModal from "@/components/NotifyModal";
+import React, { useEffect } from "react";
+import { ActivityIndicator, FlatList, Pressable, SafeAreaView, StyleSheet, Text, View } from "react-native";
 
-  const fetchEvents = async () => {
-    try {
-      const events = await EventsService.getEvents();
-      setEvents(events);
-    } catch (error) {
-      console.error('Error fetching events:', error);
-    }
-  };
+import { useEventModals } from "@/hooks/useEventModals";
+import { useEventsData } from "@/hooks/useEventsData";
+import { useNotifications } from "@/hooks/useNotifications";
+import { Event } from "@/types/events";
+
+export default function Index() {
+  
+  const { events, loading, error, addEvent, removeEvent, updateEvent, userId } = useEventsData();
+  const {
+    addModalVisible, editModalVisible, notifyModalVisible,
+    selectedEventForEdit, selectedEventIdForNotify,
+    openAddModal, closeAddModal,
+    openEditModal, closeEditModal,
+    openNotifyModal, closeNotifyModal,
+  } = useEventModals();
+  const {
+    fetchNotifications,
+    isEventNotified,
+    handleNotificationSubmit,
+    handleDeleteNotification
+  } = useNotifications();
+
 
   useEffect(() => {
-    fetchEvents();
-  }, []);
+    if (userId) {
+      fetchNotifications(userId);
+    }
+  }, [userId, fetchNotifications]);
 
-  const handleSaveEvent = async (event: { event_name: string }) => {
-    console.log("Evento guardado:", event);
-    try {
-      const response = await EventsService.createEvent(event);
-      console.log("Evento guardado:", response);
-      setEvents((prevEvents) => [...prevEvents, response]);
-    } catch (error) {
-      console.error("Error al guardar el evento:", error);
+  useEffect(() => {
+  }, [addModalVisible, editModalVisible, notifyModalVisible]);
+
+  const handleSaveEvent = async (eventData: { event_name: string }) => {
+    const success = await addEvent(eventData);
+    if (success) closeAddModal();
+  };
+
+  const handleDeleteEvent = async (id: string) => {
+    await removeEvent(id);
+  };
+
+  const handleUpdateEvent = async (eventData: Partial<Event>) => {
+    if (!selectedEventForEdit?.id) return;
+    const success = await updateEvent(selectedEventForEdit.id, eventData);
+    if (success) closeEditModal();
+  };
+
+  const onNotificationConfirm = async (modalPrefs: {
+    email: boolean;
+    phone: boolean;
+    emailAddress?: string;
+    phoneNumber?: string;
+    notificationTiming: {
+      oneDayBefore: boolean;
+      oneHourBefore: boolean;
+      thirtyMinutesBefore: boolean;
+      atEventTime: boolean;
+    };
+  }) => {
+    if (!selectedEventIdForNotify) return;
+
+    const eventToNotify = events.find(event => event.id === selectedEventIdForNotify);
+    if (!eventToNotify) return;
+
+
+    const success = await handleNotificationSubmit(
+      selectedEventIdForNotify,
+      eventToNotify.event_time,
+      modalPrefs
+    );
+    if (success) {
+      closeNotifyModal();
     }
   };
 
-  const deleteEvent = async (id: string) => {
-    try {
-      await EventsService.deleteEvent(id);
-      setEvents((prevEvents) => prevEvents.filter((event) => event.id !== id));
-    } catch (error) {
-      console.error("Error al eliminar el evento:", error);
-    }
-  };
-
-  const editEvent = (event: Event) => {
-    setSelectedEvent(event);
-  };
-
-  const handleEditEvent = async (eventData: Partial<Event>) => {
-    if (!selectedEvent) return;
-    try {
-      console.log(eventData)
-      const updatedEvent = await EventsService.updateEvent(selectedEvent.id, eventData);
-      setEvents(prevEvents => prevEvents.map(event => 
-        event.id === selectedEvent.id ? updatedEvent : event
-      ));
-      setIsEditModalOpen(false);
-    } catch (error) {
-      console.error("Error updating event:", error);
+  const onNotificationDelete = async () => {
+    if (!selectedEventIdForNotify) return;
+    const success = await handleDeleteNotification(selectedEventIdForNotify);
+    if (success) {
+      closeNotifyModal();
     }
   };
 
@@ -79,35 +95,63 @@ export default function Index() {
       </View>
       <Pressable
         style={styles.button}
-        onPress={() => setModalVisible(true)}
+        onPress={openAddModal}
       >
         <Text style={styles.buttonText}>Add Event</Text>
       </Pressable>
 
       <AddEventModal
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
+        visible={addModalVisible}
+        onClose={closeAddModal}
         onSave={handleSaveEvent}
       />
 
       <AddEventModal
-        visible={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        onSave={handleEditEvent}
-        initialData={selectedEvent}
+        visible={editModalVisible}
+        onClose={closeEditModal}
+        onSave={handleUpdateEvent}
+        initialData={selectedEventForEdit}
       />
 
-      <FlatList
-        data={events}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <EventCard event={item} onEdit={() => { editEvent(item); setIsEditModalOpen(true); }} onDelete={() => deleteEvent(item.id)} onNotify={() => {}} isNotified={false} />}
-        contentContainerStyle={{ paddingBottom: 20 }}
-        ListEmptyComponent={
-          <View style={{ padding: 20, alignItems: 'center' }}>
-            <Text>No events available</Text>
-          </View>
-        }
+      <NotifyModal
+        visible={notifyModalVisible}
+        onClose={closeNotifyModal}
+        onConfirm={onNotificationConfirm}
+        isNotified={selectedEventIdForNotify ? isEventNotified(selectedEventIdForNotify) : false}
+        onDelete={onNotificationDelete}
       />
+
+      {loading ? (
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color="#0000ff" />
+          <Text>Loading events...</Text>
+        </View>
+      ) : error ? (
+        <View style={styles.centered}>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      ) : (
+        <FlatList
+          style={styles.list}
+          data={events}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <EventCard
+              event={item}
+              onEdit={() => openEditModal(item)}
+              onDelete={() => handleDeleteEvent(item.id)}
+              onNotify={() => openNotifyModal(item.id)}
+              isNotified={isEventNotified(item.id)}
+            />
+          )}
+          contentContainerStyle={{ paddingBottom: 20 }}
+          ListEmptyComponent={
+            <View style={{ padding: 20, alignItems: 'center' }}>
+              <Text>No events available</Text>
+            </View>
+          }
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -115,7 +159,9 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 20,
-
+  },
+  list: {
+    padding: 20,
   },
   headline: {
     paddingVertical: 20
@@ -131,4 +177,14 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 18,
   },
-})
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 16,
+    textAlign: 'center',
+  }
+});

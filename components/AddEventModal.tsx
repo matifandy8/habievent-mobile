@@ -60,6 +60,12 @@ export default function AddEventModal({
       alert("Please enter an event name.");
       return;
     }
+
+    if (selectedDate <= new Date()) {
+      alert("Please select a future date for the event.");
+      return;
+    }
+
     onSave({
       event_name: eventName,
       event_type: eventType,

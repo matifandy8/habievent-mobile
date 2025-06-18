@@ -25,10 +25,18 @@ export default function EventDateTimePicker({
             mode="single"
             date={date}
             onChange={({ date }) => {
-              if (date) onChange(date instanceof Date ? date : new Date(date));
+              if (date) {
+                const selectedDate = date instanceof Date ? date : new Date(date);
+                if (selectedDate <= new Date()) {
+                  alert("Please select a future date for the event.");
+                  return;
+                }
+                onChange(selectedDate);
+              }
             }}
             styles={defaultStyles}
             timePicker
+            minDate={new Date()}
           />
           <Button title="Close" onPress={onClose} />
           <Button title="Save" onPress={() => onChange(date)} />
