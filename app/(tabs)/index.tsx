@@ -1,6 +1,7 @@
 import AddEventModal from "@/components/AddEventModal";
 import EventCard from "@/components/EventCard";
 import NotifyModal from "@/components/NotifyModal";
+import { Feather } from "@expo/vector-icons";
 import React, { useEffect } from "react";
 import { ActivityIndicator, FlatList, Pressable, SafeAreaView, StyleSheet, Text, View } from "react-native";
 
@@ -91,35 +92,8 @@ export default function Index() {
     <SafeAreaView style={{ flex: 1 }}>
       <View style={styles.container}>
         <Text style={styles.headline}>HabiEvent</Text>
-        <Text>List here Events</Text>
+        <Text style={styles.subtitle}>List here Events</Text>
       </View>
-      <Pressable
-        style={styles.button}
-        onPress={openAddModal}
-      >
-        <Text style={styles.buttonText}>Add Event</Text>
-      </Pressable>
-
-      <AddEventModal
-        visible={addModalVisible}
-        onClose={closeAddModal}
-        onSave={handleSaveEvent}
-      />
-
-      <AddEventModal
-        visible={editModalVisible}
-        onClose={closeEditModal}
-        onSave={handleUpdateEvent}
-        initialData={selectedEventForEdit}
-      />
-
-      <NotifyModal
-        visible={notifyModalVisible}
-        onClose={closeNotifyModal}
-        onConfirm={onNotificationConfirm}
-        isNotified={selectedEventIdForNotify ? isEventNotified(selectedEventIdForNotify) : false}
-        onDelete={onNotificationDelete}
-      />
 
       {loading ? (
         <View style={styles.centered}>
@@ -144,14 +118,46 @@ export default function Index() {
               isNotified={isEventNotified(item.id)}
             />
           )}
-          contentContainerStyle={{ paddingBottom: 20 }}
+          contentContainerStyle={{ paddingBottom: 100 }}
           ListEmptyComponent={
-            <View style={{ padding: 20, alignItems: 'center' }}>
-              <Text>No events available</Text>
+            <View style={styles.emptyContainer}>
+              <Feather name="calendar" size={48} color="#9ca3af" />
+              <Text style={styles.emptyText}>No events available</Text>
+              <Text style={styles.emptySubtext}>Tap the + button to create your first event</Text>
             </View>
           }
         />
       )}
+
+      {/* Floating Action Button */}
+      <Pressable
+        style={styles.fab}
+        onPress={openAddModal}
+        android_ripple={{ color: 'rgba(255,255,255,0.3)', borderless: true }}
+      >
+        <Feather name="plus" size={24} color="white" />
+      </Pressable>
+
+      <AddEventModal
+        visible={addModalVisible}
+        onClose={closeAddModal}
+        onSave={handleSaveEvent}
+      />
+
+      <AddEventModal
+        visible={editModalVisible}
+        onClose={closeEditModal}
+        onSave={handleUpdateEvent}
+        initialData={selectedEventForEdit}
+      />
+
+      <NotifyModal
+        visible={notifyModalVisible}
+        onClose={closeNotifyModal}
+        onConfirm={onNotificationConfirm}
+        isNotified={selectedEventIdForNotify ? isEventNotified(selectedEventIdForNotify) : false}
+        onDelete={onNotificationDelete}
+      />
     </SafeAreaView>
   );
 }
@@ -164,18 +170,53 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   headline: {
-    paddingVertical: 20
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#111827",
+    paddingVertical: 20,
   },
-  button: {
-    backgroundColor: 'black',
-    padding: 12,
-    borderRadius: 6,
+  subtitle: {
+    fontSize: 16,
+    color: "#6b7280",
+    marginBottom: 10,
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 30,
+    right: 30,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#111827',
+    justifyContent: 'center',
     alignItems: 'center',
-    margin: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
-  buttonText: {
-    color: 'white',
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  emptyText: {
     fontSize: 18,
+    color: '#6b7280',
+    marginTop: 16,
+    fontWeight: '500',
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: '#9ca3af',
+    marginTop: 8,
+    textAlign: 'center',
+    paddingHorizontal: 40,
   },
   centered: {
     flex: 1,
